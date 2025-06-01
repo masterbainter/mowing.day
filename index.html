@@ -8,45 +8,72 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --maroon-primary: #7B1113; /* Refined maroon color */
+            --maroon-light: #9A3E40;   /* A lighter version for hover/accents */
+            --white-text: #ffffff;
+            --off-white-bg: #f8f8f8; 
+            --dark-text: #333333;
+            --border-color: #dddddd;
+        }
+
         body { 
             font-family: 'Poppins', Arial, sans-serif; 
             margin: 0; 
             padding: 0; 
-            background-color: #f0f4f0; 
-            color: #333; 
+            background-color: var(--off-white-bg); 
+            color: var(--dark-text); 
             line-height: 1.6;
         }
         .header {
-            background-color: #38a169; 
-            color: white;
-            padding: 20px 0;
+            background-color: var(--maroon-primary); 
+            color: var(--white-text);
+            padding: 15px 20px;
             text-align: center;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex; 
+            align-items: center;
+            justify-content: center; 
+        }
+        .header img.logo {
+            height: 50px; 
+            margin-right: 15px;
+            border-radius: 4px; 
         }
         .header h1 {
             margin: 0;
             font-weight: 600;
-            font-size: 2.5em;
+            font-size: 2.2em; 
         }
         .container { 
             max-width: 700px; 
             margin: 30px auto; 
-            background-color: #fff; 
+            background-color: var(--white-text); 
             padding: 25px 30px; 
             border-radius: 12px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
-            position: relative; /* For positioning the modal */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08); 
+            position: relative;
         }
         h1, h2 { 
-            color: #2f855a; 
+            color: var(--maroon-primary); 
             margin-top: 0;
         }
-        h1 { font-size: 2em; text-align: center; margin-bottom: 20px; }
-        h2 { font-size: 1.5em; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 20px;}
+        h2 { 
+            font-size: 1.5em; 
+            border-bottom: 2px solid var(--border-color); 
+            padding-bottom: 10px; 
+            margin-bottom: 20px;
+        }
+         h2::before { 
+            content: "mowing.day "; 
+            color: var(--maroon-light); 
+            font-weight: 400; 
+            margin-right: 5px;
+        }
 
         button, input[type="date"] {
-            background-color: #48bb78; 
-            color: white; 
+            background-color: var(--maroon-primary); 
+            color: var(--white-text); 
             padding: 12px 20px; 
             border: none; 
             border-radius: 6px; 
@@ -57,7 +84,7 @@
             font-family: 'Poppins', sans-serif;
         }
         button:hover { 
-            background-color: #38a169; 
+            background-color: var(--maroon-light); 
         }
         #fetch-availability-button {
             margin-left: 10px;
@@ -69,39 +96,39 @@
             width: 100%; 
             text-align: left; 
             margin-bottom: 10px; 
-            background-color: #68d391; 
+            background-color: var(--maroon-light); 
             padding: 12px 15px;
         }
         #services-list li button:hover { 
-            background-color: #48bb78; 
+            background-color: var(--maroon-primary); 
         }
 
         .time-slot-button {
-            background-color: #e2e8f0; 
-            color: #2d3748; 
+            background-color: #f0f0f0; 
+            color: var(--dark-text); 
             margin-right: 8px; 
             margin-bottom: 8px;
             padding: 10px 15px;
         }
         .time-slot-button:hover { 
-            background-color: #cbd5e0; 
+            background-color: #e0e0e0; 
         }
         .time-slot-button.selected { 
-            background-color: #38a169; 
-            color: white;
+            background-color: var(--maroon-primary); 
+            color: var(--white-text);
             font-weight: bold;
         }
 
         .step { 
             margin-bottom: 30px; 
             padding: 20px; 
-            border: 1px solid #e2e8f0; 
+            border: 1px solid var(--border-color); 
             border-radius: 8px; 
-            background-color: #f9fafb; 
+            background-color: #fdfdfd; 
         }
-        .hidden { display: none !important; } /* Added !important for stronger override */
+        .hidden { display: none !important; }
 
-        #error-log, #status-message { /* Renamed success-log to status-message */
+        #error-log, #status-message { 
             margin-top: 20px; 
             padding: 15px; 
             border-radius: 6px; 
@@ -109,28 +136,27 @@
             text-align: center;
         }
         #error-log { 
-            background-color: #fed7d7; 
-            color: #c53030; 
-            border: 1px solid #f56565;
+            background-color: #ffebee; 
+            color: #c62828; 
+            border: 1px solid #ef9a9a;
         }
-        #status-message.success { /* Style for success */
-            background-color: #c6f6d5; 
-            color: #2f855a; 
-            border: 1px solid #68d391;
+        #status-message.success { 
+            background-color: #e8f5e9; 
+            color: #2e7d32; 
+            border: 1px solid #a5d6a7;
         }
-        #status-message.info { /* Style for general info */
-            background-color: #bee3f8;
-            color: #2c5282;
-            border: 1px solid #90cdf4;
+        #status-message.info { 
+            background-color: #e3f2fd; 
+            color: #1565c0; 
+            border: 1px solid #90caf9;
         }
-
 
         label { 
             display: block; 
             margin-top: 15px; 
             margin-bottom: 8px; 
             font-weight: 600; 
-            color: #4a5568; 
+            color: #555555; 
         }
         input[type="text"], 
         input[type="email"], 
@@ -139,7 +165,7 @@
             width: calc(100% - 24px); 
             padding: 12px; 
             margin-bottom: 15px; 
-            border: 1px solid #cbd5e0; 
+            border: 1px solid var(--border-color); 
             border-radius: 6px;
             font-size: 16px;
             box-sizing: border-box; 
@@ -147,8 +173,8 @@
         }
         input[type="date"] {
              width: auto; 
-             background-color: #68d391; 
-             color: white;
+             background-color: var(--maroon-light); 
+             color: var(--white-text);
              padding-right: 10px; 
         }
         input[type="date"]::-webkit-calendar-picker-indicator {
@@ -164,43 +190,34 @@
             flex-grow: 1; 
             margin: 0 5px; 
         }
-        .form-actions button:first-child {
+        .form-actions button:first-child { 
             margin-left: 0;
-             background-color: #48bb78; 
+             background-color: var(--maroon-primary); 
         }
          .form-actions button:first-child:hover {
-             background-color: #38a169;
+             background-color: var(--maroon-light);
         }
-        .form-actions button#back-to-availability {
+        .form-actions button#back-to-availability { 
             margin-right: 0;
-            background-color: #a0aec0; 
+            background-color: #cccccc; 
+            color: var(--dark-text);
         }
          .form-actions button#back-to-availability:hover {
-            background-color: #718096;
-        }
-
-        h1::before {
-            content: "🌿 "; 
-            margin-right: 5px;
-        }
-         h2::before {
-            content: " mowing.day "; 
-            color: #a5d6a7;
-            margin-right: 5px;
+            background-color: #bbbbbb;
         }
 
         /* Custom Modal Styles */
         .modal-overlay {
-            position: fixed; /* Changed to fixed for full screen overlay */
+            position: fixed; 
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent black */
+            background-color: rgba(0, 0, 0, 0.6); 
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 1000; /* Ensure it's on top */
+            z-index: 1000; 
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.3s ease, visibility 0s linear 0.3s;
@@ -211,7 +228,7 @@
             transition: opacity 0.3s ease;
         }
         .modal-content {
-            background-color: #fff;
+            background-color: var(--white-text);
             padding: 30px 40px;
             border-radius: 10px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.2);
@@ -225,7 +242,7 @@
             transform: scale(1);
         }
         .modal-content h3 {
-            color: #2f855a;
+            color: var(--maroon-primary);
             margin-top: 0;
             font-size: 1.8em;
         }
@@ -234,18 +251,20 @@
             margin-bottom: 25px;
             color: #4a5568;
         }
-        .modal-content button {
-            background-color: #48bb78;
+        .modal-content button { 
+            background-color: var(--maroon-primary);
             min-width: 120px;
         }
          .modal-content button:hover {
-            background-color: #38a169;
+            background-color: var(--maroon-light);
         }
 
     </style>
 </head>
 <body>
     <header class="header">
+        <img src="https://raw.githubusercontent.com/masterbainter/mowing.day/refs/heads/main/Logo%20Maroon%20(jpg%20border%20shrunk).jpg" alt="Madison Mowing Logo" class="logo" 
+             onerror="this.style.display='none'; console.error('Logo failed to load')">
         <h1>Madison Mowing</h1>
     </header>
 
@@ -262,9 +281,9 @@
             <div>
                 <label for="booking-date">Select Date:</label>
                 <input type="date" id="booking-date" name="booking-date">
-                <button id="fetch-availability-button">Check Availability  mowing.day</button>
+                <button id="fetch-availability-button">Check Availability</button> 
             </div>
-            <div id="time-slots-container" style="margin-top: 20px; padding-top:10px; border-top: 1px solid #e2e8f0;">
+            <div id="time-slots-container" style="margin-top: 20px; padding-top:10px; border-top: 1px solid var(--border-color);">
                 <p>Please select a date to see available times.</p>
             </div>
         </div>
@@ -286,7 +305,7 @@
                     <input type="tel" id="customer-phone" name="customerPhone">
                 </div>
                 <div class="form-actions">
-                    <button type="submit" id="confirm-booking-button"> mowing.day Confirm Booking</button>
+                    <button type="submit" id="confirm-booking-button">Confirm Booking</button>
                     <button type="button" id="back-to-availability">Back</button>
                 </div>
             </form>
@@ -298,8 +317,8 @@
 
     <div id="success-modal-overlay" class="modal-overlay">
         <div class="modal-content">
-            <h3>🌿 Booking Confirmed! 🌿</h3>
-            <p id="modal-booking-id-message">Your appointment is set. We look forward to seeing you!</p>
+            <h3>Booking Confirmed!</h3> 
+            <p id="modal-booking-details-message">Your appointment is set. We look forward to seeing you!</p>
             <button id="close-modal-button">Great!</button>
         </div>
     </div>
