@@ -12,12 +12,12 @@
             font-family: 'Poppins', Arial, sans-serif; 
             margin: 0; 
             padding: 0; 
-            background-color: #f0f4f0; /* Light, earthy green-ish beige */
+            background-color: #f0f4f0; 
             color: #333; 
             line-height: 1.6;
         }
         .header {
-            background-color: #38a169; /* Richer green */
+            background-color: #38a169; 
             color: white;
             padding: 20px 0;
             text-align: center;
@@ -35,16 +35,17 @@
             padding: 25px 30px; 
             border-radius: 12px; 
             box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+            position: relative; /* For positioning the modal */
         }
         h1, h2 { 
-            color: #2f855a; /* Darker, sophisticated green */
+            color: #2f855a; 
             margin-top: 0;
         }
         h1 { font-size: 2em; text-align: center; margin-bottom: 20px; }
         h2 { font-size: 1.5em; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 20px;}
 
         button, input[type="date"] {
-            background-color: #48bb78; /* Vibrant, friendly green */
+            background-color: #48bb78; 
             color: white; 
             padding: 12px 20px; 
             border: none; 
@@ -56,39 +57,37 @@
             font-family: 'Poppins', sans-serif;
         }
         button:hover { 
-            background-color: #38a169; /* Darker shade for hover */
+            background-color: #38a169; 
         }
         #fetch-availability-button {
             margin-left: 10px;
         }
         
         ul { list-style-type: none; padding: 0; }
-        /* Service selection buttons */
         #services-list li button { 
             display: block; 
             width: 100%; 
             text-align: left; 
             margin-bottom: 10px; 
-            background-color: #68d391; /* Lighter, inviting green */
+            background-color: #68d391; 
             padding: 12px 15px;
         }
         #services-list li button:hover { 
             background-color: #48bb78; 
         }
 
-        /* Time slot buttons */
-        .time-slot-button { /* Changed from .time-slot button to target the class directly */
-            background-color: #e2e8f0; /* Light gray */
-            color: #2d3748; /* Dark gray text */
+        .time-slot-button {
+            background-color: #e2e8f0; 
+            color: #2d3748; 
             margin-right: 8px; 
             margin-bottom: 8px;
             padding: 10px 15px;
         }
         .time-slot-button:hover { 
-            background-color: #cbd5e0; /* Slightly darker gray */
+            background-color: #cbd5e0; 
         }
         .time-slot-button.selected { 
-            background-color: #38a169; /* Active green */
+            background-color: #38a169; 
             color: white;
             font-weight: bold;
         }
@@ -96,13 +95,13 @@
         .step { 
             margin-bottom: 30px; 
             padding: 20px; 
-            border: 1px solid #e2e8f0; /* Light border */
+            border: 1px solid #e2e8f0; 
             border-radius: 8px; 
-            background-color: #f9fafb; /* Very light gray background for steps */
+            background-color: #f9fafb; 
         }
-        .hidden { display: none; }
+        .hidden { display: none !important; } /* Added !important for stronger override */
 
-        #error-log, #success-log { 
+        #error-log, #status-message { /* Renamed success-log to status-message */
             margin-top: 20px; 
             padding: 15px; 
             border-radius: 6px; 
@@ -110,80 +109,137 @@
             text-align: center;
         }
         #error-log { 
-            background-color: #fed7d7; /* Light red */
-            color: #c53030; /* Dark red */
+            background-color: #fed7d7; 
+            color: #c53030; 
             border: 1px solid #f56565;
         }
-        #success-log { 
-            background-color: #c6f6d5; /* Light green */
-            color: #2f855a; /* Dark green */
+        #status-message.success { /* Style for success */
+            background-color: #c6f6d5; 
+            color: #2f855a; 
             border: 1px solid #68d391;
         }
+        #status-message.info { /* Style for general info */
+            background-color: #bee3f8;
+            color: #2c5282;
+            border: 1px solid #90cdf4;
+        }
+
 
         label { 
             display: block; 
             margin-top: 15px; 
             margin-bottom: 8px; 
             font-weight: 600; 
-            color: #4a5568; /* Medium gray */
+            color: #4a5568; 
         }
         input[type="text"], 
         input[type="email"], 
         input[type="tel"], 
         input[type="date"] {
-            width: calc(100% - 24px); /* Account for padding */
+            width: calc(100% - 24px); 
             padding: 12px; 
             margin-bottom: 15px; 
             border: 1px solid #cbd5e0; 
             border-radius: 6px;
             font-size: 16px;
-            box-sizing: border-box; /* Important for width calculation */
+            box-sizing: border-box; 
             font-family: 'Poppins', sans-serif;
         }
-        input[type="date"] { /* Specific styling for date input if needed */
-             width: auto; /* Allow date input to size naturally or set specific width */
-             background-color: #68d391; /* Lighter green for date input */
+        input[type="date"] {
+             width: auto; 
+             background-color: #68d391; 
              color: white;
-             padding-right: 10px; /* Ensure calendar icon is not overlapped */
+             padding-right: 10px; 
         }
-        input[type="date"]::-webkit-calendar-picker-indicator { /* Style calendar icon if possible */
-            filter: invert(1); /* Makes it white on dark background */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1); 
         }
-
 
         .form-actions { 
             margin-top: 25px; 
             display: flex;
-            justify-content: space-between; /* Puts buttons on opposite ends */
+            justify-content: space-between; 
         }
         .form-actions button {
-            flex-grow: 1; /* Make buttons take available space */
-            margin: 0 5px; /* Add some space between buttons */
+            flex-grow: 1; 
+            margin: 0 5px; 
         }
         .form-actions button:first-child {
             margin-left: 0;
-             background-color: #48bb78; /* Primary action green */
+             background-color: #48bb78; 
         }
          .form-actions button:first-child:hover {
              background-color: #38a169;
         }
         .form-actions button#back-to-availability {
             margin-right: 0;
-            background-color: #a0aec0; /* Secondary action gray */
+            background-color: #a0aec0; 
         }
          .form-actions button#back-to-availability:hover {
             background-color: #718096;
         }
 
-        /* Small thematic touches */
         h1::before {
-            content: "🌿 "; /* Leaf icon */
+            content: "🌿 "; 
             margin-right: 5px;
         }
          h2::before {
-            content: " mowing.day "; /* Leaf icon */
+            content: " mowing.day "; 
             color: #a5d6a7;
             margin-right: 5px;
+        }
+
+        /* Custom Modal Styles */
+        .modal-overlay {
+            position: fixed; /* Changed to fixed for full screen overlay */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent black */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000; /* Ensure it's on top */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+        }
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.3s ease;
+        }
+        .modal-content {
+            background-color: #fff;
+            padding: 30px 40px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 450px;
+            width: 90%;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        .modal-overlay.visible .modal-content {
+            transform: scale(1);
+        }
+        .modal-content h3 {
+            color: #2f855a;
+            margin-top: 0;
+            font-size: 1.8em;
+        }
+        .modal-content p {
+            font-size: 1.1em;
+            margin-bottom: 25px;
+            color: #4a5568;
+        }
+        .modal-content button {
+            background-color: #48bb78;
+            min-width: 120px;
+        }
+         .modal-content button:hover {
+            background-color: #38a169;
         }
 
     </style>
@@ -237,7 +293,17 @@
         </div>
         
         <div id="error-log" class="hidden"></div>
-        <div id="success-log" class="hidden"></div> </div>
+        <div id="status-message" class="hidden"></div> 
+    </div>
 
-    <script src="script.js"></script> </body>
+    <div id="success-modal-overlay" class="modal-overlay">
+        <div class="modal-content">
+            <h3>🌿 Booking Confirmed! 🌿</h3>
+            <p id="modal-booking-id-message">Your appointment is set. We look forward to seeing you!</p>
+            <button id="close-modal-button">Great!</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
 </html>
