@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // DOM Element Acquisition
     const servicesListEl = document.getElementById('services-list');
     const errorLogEl = document.getElementById('error-log');
-    const statusMessageEl = document.getElementById('status-message'); 
+    const statusMessageEl = document.getElementById('status-message');
     const serviceSelectionStep = document.getElementById('service-selection');
     const availabilitySelectionStep = document.getElementById('availability-selection');
     const bookingFormContainerStep = document.getElementById('booking-form-container');
@@ -19,7 +19,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const bookingSummaryTimeEl = document.getElementById('booking-summary-time');
     const bookingSummaryDateEl = document.getElementById('booking-summary-date');
     const backToAvailabilityButton = document.getElementById('back-to-availability');
+
+    // Modal elements
     const successModalOverlay = document.getElementById('success-modal-overlay');
+    // UPDATED ID to match optional HTML change
     const modalBookingDetailsMessageEl = document.getElementById('modal-booking-details-message'); 
     const closeModalButton = document.getElementById('close-modal-button');
 
@@ -38,8 +41,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (statusMessageEl) statusMessageEl.classList.add('hidden');
     }
 
+    // --- MODIFIED: showSuccessModal to accept service, date, and time ---
     function showSuccessModal(serviceName, bookedDateString, bookedTimeString) {
         if (modalBookingDetailsMessageEl) {
+            // Construct a more meaningful message
             modalBookingDetailsMessageEl.innerHTML = `Your booking for <strong>${serviceName}</strong> on <strong>${bookedDateString}</strong> at <strong>${bookedTimeString}</strong> is confirmed. <br>We look forward to seeing you!`;
         }
         if (successModalOverlay) {
@@ -79,21 +84,132 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Main Functions
-    async function fetchServices() { /* ... same as before ... */ }
-    function renderServices() { /* ... same as before ... */ }
-    function handleServiceSelection(service) { /* ... same as before ... */ }
-    if (fetchAvailabilityButton) { fetchAvailabilityButton.addEventListener('click', async () => { /* ... same as before ... */ }); }
-    function renderAvailabilitySlots(availabilityData) { /* ... same as before ... */ }
-    function handleTimeSlotSelection() { /* ... same as before ... */ }
+    async function fetchServices() {
+        if (!servicesListEl) return;
+        servicesListEl.innerHTML = '<li>Loading services...</li>';
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/services`);
+            if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.message || `Server responded with ${response.status}`); }
+            currentServices = await response.json();
+            renderServices();
+        } catch (error) {
+            console.error('Failed to fetch services:', error);
+            showError(`Error fetching services: ${error.message}`);
+            servicesListEl.innerHTML = '<li>Could not load services.</li>';
+        }
+    }
 
-    // --- Re-pasting full functions for safety, with the key change in bookingForm listener ---
-    async function fetchServices() {if (!servicesListEl) return; servicesListEl.innerHTML = '<li>Loading services...</li>'; try {const response = await fetch(`${API_BASE_URL}/api/services`); if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.message || `Server responded with ${response.status}`); } currentServices = await response.json(); renderServices(); } catch (error) { console.error('Failed to fetch services:', error); showError(`Error fetching services: ${error.message}`); servicesListEl.innerHTML = '<li>Could not load services.</li>'; } }
-    function renderServices() {if (!servicesListEl) return; servicesListEl.innerHTML = ''; if (currentServices.length === 0) { servicesListEl.innerHTML = '<li>No services found.</li>'; return; } currentServices.forEach(service => { const li = document.createElement('li'); const button = document.createElement('button'); button.textContent = service.displayName; button.onclick = () => handleServiceSelection(service); li.appendChild(button); servicesListEl.appendChild(li); }); }
-    function handleServiceSelection(service) { selectedService = service; if (selectedServiceNameEl) selectedServiceNameEl.textContent = service.displayName; navigateToStep(availabilitySelectionStep); if (bookingDateInput) bookingDateInput.value = ''; if (timeSlotsContainerEl) timeSlotsContainerEl.innerHTML = '<p>Please select a date to see available times.</p>'; }
-    if (fetchAvailabilityButton) { fetchAvailabilityButton.addEventListener('click', async () => { selectedDate = bookingDateInput.value; if (!selectedService || !selectedDate) { showError("Please select a service and a date."); return; } if (timeSlotsContainerEl) timeSlotsContainerEl.innerHTML = '<p>Fetching available times...</p>'; clearLogs(); try { const response = await fetch(`${API_BASE_URL}/api/availability`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ serviceId: selectedService.id, date: selectedDate }) }); if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.message || `Server responded with ${response.status}`);} const availabilityData = await response.json(); renderAvailabilitySlots(availabilityData); } catch (error) { console.error('Failed to fetch availability:', error); showError(`Error fetching availability: ${error.message}`); if (timeSlotsContainerEl) timeSlotsContainerEl.innerHTML = '<p>Could not load available times. Please try another date.</p>'; } }); }
-    function renderAvailabilitySlots(availabilityData) { if (timeSlotsContainerEl) timeSlotsContainerEl.innerHTML = ''; if (!selectedService) { if (timeSlotsContainerEl) timeSlotsContainerEl.innerHTML = '<p>Error: Service not selected for slot generation.</p>'; return; } if (!availabilityData || availabilityData.length === 0) { if (timeSlotsContainerEl) timeSlotsContainerEl.innerHTML = '<p>No available time slots for this date. Please try another date.</p>'; return; } const serviceDurationMillis = parseIsoDurationToMillis(selectedService.defaultDuration); if (serviceDurationMillis === 0) { if (timeSlotsContainerEl) timeSlotsContainerEl.innerHTML = '<p>Service duration is not configured correctly or is zero.</p>'; return; } const allGeneratedSlots = []; availabilityData.forEach((viewItem) => { if (viewItem.availabilityItems && viewItem.availabilityItems.length > 0) { viewItem.availabilityItems.forEach((block) => { if (block.status && (block.status.toLowerCase() === 'free' || block.status.toLowerCase() === 'available')) { let currentSlotStart = new Date(block.startDateTime.dateTime); const blockEnd = new Date(block.endDateTime.dateTime); while (currentSlotStart.getTime() + serviceDurationMillis <= blockEnd.getTime()) { const slotEnd = new Date(currentSlotStart.getTime() + serviceDurationMillis); allGeneratedSlots.push({ start: new Date(currentSlotStart.getTime()), end: slotEnd, staffMemberId: viewItem.staffId }); currentSlotStart = new Date(slotEnd.getTime()); } } }); } }); if (allGeneratedSlots.length === 0) { if (timeSlotsContainerEl) timeSlotsContainerEl.innerHTML = '<p>No available time slots for this date (after processing). Please try another date.</p>'; return; } allGeneratedSlots.forEach(slotData => { const slotButton = document.createElement('button'); slotButton.classList.add('time-slot-button'); const options = { hour: 'numeric', minute: 'numeric', hour12: true }; slotButton.textContent = slotData.start.toLocaleTimeString([], options); slotButton.onclick = () => { document.querySelectorAll('.time-slot-button.selected').forEach(btn => btn.classList.remove('selected')); slotButton.classList.add('selected'); selectedTimeSlot = { startDateTime: slotData.start.toISOString(), endDateTime: slotData.end.toISOString(), staffMemberId: slotData.staffMemberId }; handleTimeSlotSelection(); }; if (timeSlotsContainerEl) timeSlotsContainerEl.appendChild(slotButton); }); }
-    function handleTimeSlotSelection() { if (!selectedService || !selectedDate || !selectedTimeSlot) { showError("Error in selection process."); return; } if (bookingSummaryServiceEl) bookingSummaryServiceEl.textContent = selectedService.displayName; if (bookingSummaryDateEl) bookingSummaryDateEl.textContent = new Date(selectedDate + 'T00:00:00').toLocaleDateString([], { year: 'numeric', month: 'long', day: 'numeric' }); if (bookingSummaryTimeEl) bookingSummaryTimeEl.textContent = new Date(selectedTimeSlot.startDateTime).toLocaleTimeString([], { hour: 'numeric', minute: 'numeric', hour12: true }); navigateToStep(bookingFormContainerStep); }
+    function renderServices() {
+        if (!servicesListEl) return;
+        servicesListEl.innerHTML = '';
+        if (currentServices.length === 0) { servicesListEl.innerHTML = '<li>No services found.</li>'; return; }
+        currentServices.forEach(service => {
+            const li = document.createElement('li');
+            const button = document.createElement('button');
+            button.textContent = service.displayName;
+            button.onclick = () => handleServiceSelection(service);
+            li.appendChild(button);
+            servicesListEl.appendChild(li);
+        });
+    }
 
+    function handleServiceSelection(service) {
+        selectedService = service;
+        if (selectedServiceNameEl) selectedServiceNameEl.textContent = service.displayName;
+        navigateToStep(availabilitySelectionStep);
+        if (bookingDateInput) bookingDateInput.value = '';
+        if (timeSlotsContainerEl) timeSlotsContainerEl.innerHTML = '<p>Please select a date to see available times.</p>';
+    }
+
+    if (fetchAvailabilityButton) {
+        fetchAvailabilityButton.addEventListener('click', async () => {
+            selectedDate = bookingDateInput.value;
+            if (!selectedService || !selectedDate) { showError("Please select a service and a date."); return; }
+            if (timeSlotsContainerEl) timeSlotsContainerEl.innerHTML = '<p>Fetching available times...</p>';
+            clearLogs();
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/availability`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ serviceId: selectedService.id, date: selectedDate })
+                });
+                if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.message || `Server responded with ${response.status}`);}
+                const availabilityData = await response.json();
+                renderAvailabilitySlots(availabilityData);
+            } catch (error) {
+                console.error('Failed to fetch availability:', error);
+                showError(`Error fetching availability: ${error.message}`);
+                if (timeSlotsContainerEl) timeSlotsContainerEl.innerHTML = '<p>Could not load available times. Please try another date.</p>';
+            }
+        });
+    }
+
+    function renderAvailabilitySlots(availabilityData) {
+        if (timeSlotsContainerEl) timeSlotsContainerEl.innerHTML = '';
+        if (!selectedService) {
+            if (timeSlotsContainerEl) timeSlotsContainerEl.innerHTML = '<p>Error: Service not selected for slot generation.</p>';
+            return;
+        }
+        if (!availabilityData || availabilityData.length === 0) {
+            if (timeSlotsContainerEl) timeSlotsContainerEl.innerHTML = '<p>No available time slots for this date. Please try another date.</p>';
+            return;
+        }
+        const serviceDurationMillis = parseIsoDurationToMillis(selectedService.defaultDuration);
+        if (serviceDurationMillis === 0) {
+            if (timeSlotsContainerEl) timeSlotsContainerEl.innerHTML = '<p>Service duration is not configured correctly or is zero.</p>';
+            return;
+        }
+        const allGeneratedSlots = [];
+        availabilityData.forEach((viewItem) => {
+            if (viewItem.availabilityItems && viewItem.availabilityItems.length > 0) {
+                viewItem.availabilityItems.forEach((block) => {
+                    if (block.status && (block.status.toLowerCase() === 'free' || block.status.toLowerCase() === 'available')) {
+                        let currentSlotStart = new Date(block.startDateTime.dateTime);
+                        const blockEnd = new Date(block.endDateTime.dateTime);
+                        while (currentSlotStart.getTime() + serviceDurationMillis <= blockEnd.getTime()) {
+                            const slotEnd = new Date(currentSlotStart.getTime() + serviceDurationMillis);
+                            allGeneratedSlots.push({
+                                start: new Date(currentSlotStart.getTime()),
+                                end: slotEnd,
+                                staffMemberId: viewItem.staffId
+                            });
+                            currentSlotStart = new Date(slotEnd.getTime());
+                        }
+                    }
+                });
+            }
+        });
+
+        if (allGeneratedSlots.length === 0) {
+            if (timeSlotsContainerEl) timeSlotsContainerEl.innerHTML = '<p>No available time slots for this date (after processing). Please try another date.</p>';
+            return;
+        }
+        allGeneratedSlots.forEach(slotData => {
+            const slotButton = document.createElement('button');
+            slotButton.classList.add('time-slot-button');
+            const options = { hour: 'numeric', minute: 'numeric', hour12: true };
+            slotButton.textContent = slotData.start.toLocaleTimeString([], options);
+            slotButton.onclick = () => {
+                document.querySelectorAll('.time-slot-button.selected').forEach(btn => btn.classList.remove('selected'));
+                slotButton.classList.add('selected');
+                selectedTimeSlot = {
+                    startDateTime: slotData.start.toISOString(),
+                    endDateTime: slotData.end.toISOString(),
+                    staffMemberId: slotData.staffId 
+                };
+                handleTimeSlotSelection();
+            };
+            if (timeSlotsContainerEl) timeSlotsContainerEl.appendChild(slotButton);
+        });
+    }
+
+    function handleTimeSlotSelection() {
+        if (!selectedService || !selectedDate || !selectedTimeSlot) { showError("Error in selection process."); return; }
+        if (bookingSummaryServiceEl) bookingSummaryServiceEl.textContent = selectedService.displayName;
+        if (bookingSummaryDateEl) bookingSummaryDateEl.textContent = new Date(selectedDate + 'T00:00:00').toLocaleDateString([], { year: 'numeric', month: 'long', day: 'numeric' }); // Nicer date format
+        if (bookingSummaryTimeEl) bookingSummaryTimeEl.textContent = new Date(selectedTimeSlot.startDateTime).toLocaleTimeString([], { hour: 'numeric', minute: 'numeric', hour12: true });
+        navigateToStep(bookingFormContainerStep);
+    }
 
     if (bookingForm) {
         bookingForm.addEventListener('submit', async (event) => {
@@ -102,27 +218,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!confirmButton) return; 
             confirmButton.disabled = true;
             confirmButton.textContent = 'Booking...';
-
-            // --- ADDED DEBUG LOGS HERE ---
-            console.log("DEBUG: Attempting to submit booking.");
-            console.log("DEBUG: selectedService object:", JSON.parse(JSON.stringify(selectedService)));
-            console.log("DEBUG: selectedTimeSlot object:", JSON.parse(JSON.stringify(selectedTimeSlot)));
-            
-            // Defensive checks for the properties we will use
-            if (!selectedService || !selectedService.id) {
-                showError("Booking failed: Service ID is missing. Please re-select a service.");
-                confirmButton.disabled = false;
-                confirmButton.textContent = ' mowing.day Confirm Booking';
-                return;
-            }
-            if (!selectedTimeSlot || !selectedTimeSlot.startDateTime || !selectedTimeSlot.endDateTime || !selectedTimeSlot.staffMemberId) {
-                showError("Booking failed: Time slot details (start, end, or staff) are missing. Please re-select a time slot.");
-                confirmButton.disabled = false;
-                confirmButton.textContent = ' mowing.day Confirm Booking';
-                return;
-            }
-            // --- END OF ADDED DEBUG LOGS AND CHECKS ---
-
             try {
                 const bookingData = {
                     serviceId: selectedService.id,
@@ -133,21 +228,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     customerEmail: document.getElementById('customer-email').value,
                     customerPhone: document.getElementById('customer-phone').value || ""
                 };
-
-                // --- Log the data being sent ---
-                console.log("DEBUG: bookingData being sent to backend:", JSON.parse(JSON.stringify(bookingData)));
-
                 const response = await fetch(`${API_BASE_URL}/api/book`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(bookingData)
                 });
                 if (!response.ok) { 
-                    const errorData = await response.json().catch(() => ({ message: "Unknown error structure from server" })); 
+                    const errorData = await response.json().catch(() => ({ message: "Unknown error structure" })); 
                     throw new Error(errorData.message || `Server responded with ${response.status}`);
                 }
-                const result = await response.json(); 
+                const result = await response.json(); // We don't need result.bookingDetails.id for the message anymore
                 
+                // --- MODIFIED: Prepare data for and show custom modal ---
                 const serviceNameForModal = selectedService.displayName;
                 const bookedDateTimeForModal = new Date(selectedTimeSlot.startDateTime);
                 const bookedDateStringForModal = bookedDateTimeForModal.toLocaleDateString([], { year: 'numeric', month: 'long', day: 'numeric' });
