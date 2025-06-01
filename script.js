@@ -3,7 +3,7 @@
 const API_BASE_URL = 'https://madison-mowing-api-1044511496334.us-central1.run.app'; 
 
 document.addEventListener('DOMContentLoaded', () => {
-    // DOM Elements
+    // DOM Element Acquisition
     const servicesListEl = document.getElementById('services-list');
     const errorLogEl = document.getElementById('error-log');
     const statusMessageEl = document.getElementById('status-message');
@@ -22,10 +22,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Modal elements
     const successModalOverlay = document.getElementById('success-modal-overlay');
-    // --- UPDATED: Selector for the new details div ---
-    const modalBookingDetailsEl = document.getElementById('modal-booking-details'); 
+    // UPDATED ID to match optional HTML change
+    const modalBookingDetailsMessageEl = document.getElementById('modal-booking-details-message'); 
     const closeModalButton = document.getElementById('close-modal-button');
-
 
     // State variables
     let currentServices = [];
@@ -42,24 +41,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (statusMessageEl) statusMessageEl.classList.add('hidden');
     }
 
-    // --- MODIFIED: showSuccessModal to accept more details ---
-    function showSuccessModal(serviceName, bookingDate, bookingTime, bookingId) {
-        if (modalBookingDetailsEl) {
-            // Format the date for display
-            const displayDate = new Date(bookingDate + 'T00:00:00').toLocaleDateString([], {
-                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-            });
-            // Format the time for display
-            const displayTime = new Date(bookingTime).toLocaleTimeString([], { 
-                hour: 'numeric', minute: 'numeric', hour12: true 
-            });
-
-            modalBookingDetailsEl.innerHTML = `
-                <p><strong>Service:</strong> ${serviceName}</p>
-                <p><strong>Date:</strong> ${displayDate}</p>
-                <p><strong>Time:</strong> ${displayTime}</p>
-                <p><strong>Reference ID:</strong> ${bookingId}</p>
-            `;
+    // --- MODIFIED: showSuccessModal to accept service, date, and time ---
+    function showSuccessModal(serviceName, bookedDateString, bookedTimeString) {
+        if (modalBookingDetailsMessageEl) {
+            // Construct a more meaningful message
+            modalBookingDetailsMessageEl.innerHTML = `Your booking for <strong>${serviceName}</strong> on <strong>${bookedDateString}</strong> at <strong>${bookedTimeString}</strong> is confirmed. <br>We look forward to seeing you!`;
         }
         if (successModalOverlay) {
             successModalOverlay.classList.add('visible');
@@ -98,13 +84,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Main Functions
-    async function fetchServices() { /* ... remains the same ... */ }
-    function renderServices() { /* ... remains the same ... */ }
-    function handleServiceSelection(service) { /* ... remains the same ... */ }
-    
-    // Re-pasting full functions from your last script version for context
     async function fetchServices() {
-        if (!servicesListEl) return; 
+        if (!servicesListEl) return;
         servicesListEl.innerHTML = '<li>Loading services...</li>';
         try {
             const response = await fetch(`${API_BASE_URL}/api/services`);
@@ -117,6 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
             servicesListEl.innerHTML = '<li>Could not load services.</li>';
         }
     }
+
     function renderServices() {
         if (!servicesListEl) return;
         servicesListEl.innerHTML = '';
@@ -130,6 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
             servicesListEl.appendChild(li);
         });
     }
+
     function handleServiceSelection(service) {
         selectedService = service;
         if (selectedServiceNameEl) selectedServiceNameEl.textContent = service.displayName;
@@ -138,11 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (timeSlotsContainerEl) timeSlotsContainerEl.innerHTML = '<p>Please select a date to see available times.</p>';
     }
 
-
-    if (fetchAvailabilityButton) {
-        fetchAvailabilityButton.addEventListener('click', async () => { /* ... remains the same ... */ });
-    }
-    // Re-pasting fetchAvailabilityButton
     if (fetchAvailabilityButton) {
         fetchAvailabilityButton.addEventListener('click', async () => {
             selectedDate = bookingDateInput.value;
@@ -166,9 +144,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-
-    function renderAvailabilitySlots(availabilityData) { /* ... remains the same, ensures slotData.staffMemberId is correctly assigned ... */ }
-    // Re-pasting renderAvailabilitySlots
     function renderAvailabilitySlots(availabilityData) {
         if (timeSlotsContainerEl) timeSlotsContainerEl.innerHTML = '';
         if (!selectedService) {
@@ -196,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             allGeneratedSlots.push({
                                 start: new Date(currentSlotStart.getTime()),
                                 end: slotEnd,
-                                staffMemberId: viewItem.staffId // staffId from the parent viewItem
+                                staffMemberId: viewItem.staffId
                             });
                             currentSlotStart = new Date(slotEnd.getTime());
                         }
@@ -211,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         allGeneratedSlots.forEach(slotData => {
             const slotButton = document.createElement('button');
-            slotButton.classList.add('time-slot-button'); 
+            slotButton.classList.add('time-slot-button');
             const options = { hour: 'numeric', minute: 'numeric', hour12: true };
             slotButton.textContent = slotData.start.toLocaleTimeString([], options);
             slotButton.onclick = () => {
@@ -220,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 selectedTimeSlot = {
                     startDateTime: slotData.start.toISOString(),
                     endDateTime: slotData.end.toISOString(),
-                    staffMemberId: slotData.staffMemberId 
+                    staffMemberId: slotData.staffId 
                 };
                 handleTimeSlotSelection();
             };
@@ -228,23 +203,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-
-    function handleTimeSlotSelection() { /* ... remains the same ... */ }
-     // Re-pasting handleTimeSlotSelection
     function handleTimeSlotSelection() {
         if (!selectedService || !selectedDate || !selectedTimeSlot) { showError("Error in selection process."); return; }
         if (bookingSummaryServiceEl) bookingSummaryServiceEl.textContent = selectedService.displayName;
-        if (bookingSummaryDateEl) bookingSummaryDateEl.textContent = new Date(selectedDate + 'T00:00:00').toLocaleDateString();
+        if (bookingSummaryDateEl) bookingSummaryDateEl.textContent = new Date(selectedDate + 'T00:00:00').toLocaleDateString([], { year: 'numeric', month: 'long', day: 'numeric' }); // Nicer date format
         if (bookingSummaryTimeEl) bookingSummaryTimeEl.textContent = new Date(selectedTimeSlot.startDateTime).toLocaleTimeString([], { hour: 'numeric', minute: 'numeric', hour12: true });
         navigateToStep(bookingFormContainerStep);
     }
-
 
     if (bookingForm) {
         bookingForm.addEventListener('submit', async (event) => {
             event.preventDefault();
             const confirmButton = document.getElementById('confirm-booking-button');
-            if (!confirmButton) return;
+            if (!confirmButton) return; 
             confirmButton.disabled = true;
             confirmButton.textContent = 'Booking...';
             try {
@@ -263,18 +234,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify(bookingData)
                 });
                 if (!response.ok) { 
-                    const errorData = await response.json().catch(() => ({ message: "Unknown error structure" }));
+                    const errorData = await response.json().catch(() => ({ message: "Unknown error structure" })); 
                     throw new Error(errorData.message || `Server responded with ${response.status}`);
                 }
-                const result = await response.json();
+                const result = await response.json(); // We don't need result.bookingDetails.id for the message anymore
                 
-                // --- MODIFIED: Call showSuccessModal with details ---
-                showSuccessModal(
-                    selectedService.displayName, 
-                    selectedDate, // Pass the date string
-                    selectedTimeSlot.startDateTime, // Pass the start time ISO string
-                    result.bookingDetails.id || 'N/A'
-                ); 
+                // --- MODIFIED: Prepare data for and show custom modal ---
+                const serviceNameForModal = selectedService.displayName;
+                const bookedDateTimeForModal = new Date(selectedTimeSlot.startDateTime);
+                const bookedDateStringForModal = bookedDateTimeForModal.toLocaleDateString([], { year: 'numeric', month: 'long', day: 'numeric' });
+                const bookedTimeStringForModal = bookedDateTimeForModal.toLocaleTimeString([], { hour: 'numeric', minute: 'numeric', hour12: true });
+
+                showSuccessModal(serviceNameForModal, bookedDateStringForModal, bookedTimeStringForModal); 
                 
                 bookingForm.reset();
             } catch (error) {
@@ -296,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (successModalOverlay) {
         successModalOverlay.addEventListener('click', (event) => {
-            if (event.target === successModalOverlay) {
+            if (event.target === successModalOverlay) { 
                 hideSuccessModal();
                 navigateToStep(serviceSelectionStep);
                 fetchServices();
