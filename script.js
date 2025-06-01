@@ -3,10 +3,10 @@
 const API_BASE_URL = 'https://madison-mowing-api-1044511496334.us-central1.run.app'; 
 
 document.addEventListener('DOMContentLoaded', () => {
-    // DOM Element Acquisition (no changes)
+    // DOM Element Acquisition
     const servicesListEl = document.getElementById('services-list');
     const errorLogEl = document.getElementById('error-log');
-    const successLogEl = document.getElementById('success-log'); // Ensure this element exists in your HTML if you use it
+    const statusMessageEl = document.getElementById('status-message'); // Using this instead of successLogEl
     const serviceSelectionStep = document.getElementById('service-selection');
     const availabilitySelectionStep = document.getElementById('availability-selection');
     const bookingFormContainerStep = document.getElementById('booking-form-container');
@@ -20,24 +20,47 @@ document.addEventListener('DOMContentLoaded', () => {
     const bookingSummaryDateEl = document.getElementById('booking-summary-date');
     const backToAvailabilityButton = document.getElementById('back-to-availability');
 
-    // State variables (no changes)
+    // Modal elements
+    const successModalOverlay = document.getElementById('success-modal-overlay');
+    const modalBookingIdMessageEl = document.getElementById('modal-booking-id-message');
+    const closeModalButton = document.getElementById('close-modal-button');
+
+    // State variables
     let currentServices = [];
     let selectedService = null;
     let selectedDate = null;
     let selectedTimeSlot = null;
 
-    // Utility Functions (no changes)
+    // Utility Functions
     function showError(message) {
         if (errorLogEl) {
             errorLogEl.textContent = message;
             errorLogEl.classList.remove('hidden');
         }
-        if (successLogEl) successLogEl.classList.add('hidden');
+        if (statusMessageEl) statusMessageEl.classList.add('hidden');
     }
+
+    function showSuccessModal(bookingId) {
+        if (modalBookingIdMessageEl) {
+            modalBookingIdMessageEl.textContent = `Your booking ID is ${bookingId}. We look forward to seeing you!`;
+        }
+        if (successModalOverlay) {
+            successModalOverlay.classList.add('visible');
+        }
+        if (errorLogEl) errorLogEl.classList.add('hidden');
+    }
+
+    function hideSuccessModal() {
+        if (successModalOverlay) {
+            successModalOverlay.classList.remove('visible');
+        }
+    }
+
     function clearLogs() {
         if (errorLogEl) { errorLogEl.classList.add('hidden'); errorLogEl.textContent = ''; }
-        if (successLogEl) { successLogEl.classList.add('hidden'); successLogEl.textContent = ''; }
+        if (statusMessageEl) { statusMessageEl.classList.add('hidden'); statusMessageEl.textContent = ''; }
     }
+
     function navigateToStep(stepToShow) {
         if (serviceSelectionStep) serviceSelectionStep.classList.add('hidden');
         if (availabilitySelectionStep) availabilitySelectionStep.classList.add('hidden');
@@ -45,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (stepToShow) stepToShow.classList.remove('hidden');
         clearLogs();
     }
+
     function parseIsoDurationToMillis(isoDuration) {
         if (!isoDuration || !isoDuration.startsWith('PT')) return 0;
         const duration = isoDuration.substring(2);
@@ -58,9 +82,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Main Functions
     async function fetchServices() {
+        if (!servicesListEl) return; // Guard against missing element
         servicesListEl.innerHTML = '<li>Loading services...</li>';
         try {
-            // --- UPDATED ---
             const response = await fetch(`${API_BASE_URL}/api/services`);
             if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.message || `Server responded with ${response.status}`); }
             currentServices = await response.json();
@@ -71,7 +95,9 @@ document.addEventListener('DOMContentLoaded', () => {
             servicesListEl.innerHTML = '<li>Could not load services.</li>';
         }
     }
+
     function renderServices() {
+        if (!servicesListEl) return;
         servicesListEl.innerHTML = '';
         if (currentServices.length === 0) { servicesListEl.innerHTML = '<li>No services found.</li>'; return; }
         currentServices.forEach(service => {
@@ -83,6 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
             servicesListEl.appendChild(li);
         });
     }
+
     function handleServiceSelection(service) {
         selectedService = service;
         if (selectedServiceNameEl) selectedServiceNameEl.textContent = service.displayName;
@@ -98,7 +125,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (timeSlotsContainerEl) timeSlotsContainerEl.innerHTML = '<p>Fetching available times...</p>';
             clearLogs();
             try {
-                // --- UPDATED ---
                 const response = await fetch(`${API_BASE_URL}/api/availability`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -157,10 +183,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         allGeneratedSlots.forEach(slotData => {
             const slotButton = document.createElement('button');
-            slotButton.classList.add('time-slot-button'); // Added class for potential styling
+            slotButton.classList.add('time-slot-button');
             const options = { hour: 'numeric', minute: 'numeric', hour12: true };
             slotButton.textContent = slotData.start.toLocaleTimeString([], options);
             slotButton.onclick = () => {
+                document.querySelectorAll('.time-slot-button.selected').forEach(btn => btn.classList.remove('selected'));
+                slotButton.classList.add('selected');
                 selectedTimeSlot = {
                     startDateTime: slotData.start.toISOString(),
                     endDateTime: slotData.end.toISOString(),
@@ -175,7 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleTimeSlotSelection() {
         if (!selectedService || !selectedDate || !selectedTimeSlot) { showError("Error in selection process."); return; }
         if (bookingSummaryServiceEl) bookingSummaryServiceEl.textContent = selectedService.displayName;
-        if (bookingSummaryDateEl) bookingSummaryDateEl.textContent = new Date(selectedDate + 'T00:00:00').toLocaleDateString();
+        if (bookingSummaryDateEl) bookingSummaryDateEl.textContent = new Date(selectedDate + 'T00:00:00').toLocaleDateString(); // Add T00:00:00 to ensure correct date parsing
         if (bookingSummaryTimeEl) bookingSummaryTimeEl.textContent = new Date(selectedTimeSlot.startDateTime).toLocaleTimeString([], { hour: 'numeric', minute: 'numeric', hour12: true });
         navigateToStep(bookingFormContainerStep);
     }
@@ -184,6 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
         bookingForm.addEventListener('submit', async (event) => {
             event.preventDefault();
             const confirmButton = document.getElementById('confirm-booking-button');
+            if (!confirmButton) return; // Guard
             confirmButton.disabled = true;
             confirmButton.textContent = 'Booking...';
             try {
@@ -196,22 +225,44 @@ document.addEventListener('DOMContentLoaded', () => {
                     customerEmail: document.getElementById('customer-email').value,
                     customerPhone: document.getElementById('customer-phone').value || ""
                 };
-                // --- UPDATED ---
                 const response = await fetch(`${API_BASE_URL}/api/book`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(bookingData)
                 });
-                if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.message || `Server responded with ${response.status}`);}
+                if (!response.ok) { 
+                    const errorData = await response.json().catch(() => ({ message: "Unknown error structure" })); // Catch if errorData is not JSON
+                    throw new Error(errorData.message || `Server responded with ${response.status}`);
+                }
                 const result = await response.json();
-                alert(`Booking confirmed! Your booking ID is ${result.bookingDetails.id}`);
-                navigateToStep(serviceSelectionStep);
-                fetchServices(); // Refresh services, or navigate to a different "thank you" state
+                
+                showSuccessModal(result.bookingDetails.id || 'N/A'); // Use the modal
+                
+                bookingForm.reset();
+                // Don't navigate away immediately, let user see/close modal
             } catch (error) {
                 showError(`Booking failed: ${error.message}`);
             } finally {
                 confirmButton.disabled = false;
-                confirmButton.textContent = 'Confirm Booking';
+                confirmButton.textContent = ' mowing.day Confirm Booking';
+            }
+        });
+    }
+
+    if (closeModalButton) {
+        closeModalButton.addEventListener('click', () => {
+            hideSuccessModal();
+            navigateToStep(serviceSelectionStep);
+            fetchServices(); // Refresh services list
+        });
+    }
+    
+    if (successModalOverlay) {
+        successModalOverlay.addEventListener('click', (event) => {
+            if (event.target === successModalOverlay) { // Only close if overlay itself is clicked
+                hideSuccessModal();
+                navigateToStep(serviceSelectionStep);
+                fetchServices();
             }
         });
     }
