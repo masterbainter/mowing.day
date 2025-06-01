@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // DOM Element Acquisition
     const servicesListEl = document.getElementById('services-list');
     const errorLogEl = document.getElementById('error-log');
-    const statusMessageEl = document.getElementById('status-message');
+    const statusMessageEl = document.getElementById('status-message'); // Using this instead of successLogEl
     const serviceSelectionStep = document.getElementById('service-selection');
     const availabilitySelectionStep = document.getElementById('availability-selection');
     const bookingFormContainerStep = document.getElementById('booking-form-container');
@@ -22,7 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Modal elements
     const successModalOverlay = document.getElementById('success-modal-overlay');
-    // UPDATED ID to match optional HTML change
     const modalBookingDetailsMessageEl = document.getElementById('modal-booking-details-message'); 
     const closeModalButton = document.getElementById('close-modal-button');
 
@@ -41,10 +40,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (statusMessageEl) statusMessageEl.classList.add('hidden');
     }
 
-    // --- MODIFIED: showSuccessModal to accept service, date, and time ---
     function showSuccessModal(serviceName, bookedDateString, bookedTimeString) {
         if (modalBookingDetailsMessageEl) {
-            // Construct a more meaningful message
             modalBookingDetailsMessageEl.innerHTML = `Your booking for <strong>${serviceName}</strong> on <strong>${bookedDateString}</strong> at <strong>${bookedTimeString}</strong> is confirmed. <br>We look forward to seeing you!`;
         }
         if (successModalOverlay) {
@@ -85,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Main Functions
     async function fetchServices() {
-        if (!servicesListEl) return;
+        if (!servicesListEl) return; 
         servicesListEl.innerHTML = '<li>Loading services...</li>';
         try {
             const response = await fetch(`${API_BASE_URL}/api/services`);
@@ -195,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 selectedTimeSlot = {
                     startDateTime: slotData.start.toISOString(),
                     endDateTime: slotData.end.toISOString(),
-                    staffMemberId: slotData.staffId 
+                    staffMemberId: slotData.staffMemberId 
                 };
                 handleTimeSlotSelection();
             };
@@ -206,7 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleTimeSlotSelection() {
         if (!selectedService || !selectedDate || !selectedTimeSlot) { showError("Error in selection process."); return; }
         if (bookingSummaryServiceEl) bookingSummaryServiceEl.textContent = selectedService.displayName;
-        if (bookingSummaryDateEl) bookingSummaryDateEl.textContent = new Date(selectedDate + 'T00:00:00').toLocaleDateString([], { year: 'numeric', month: 'long', day: 'numeric' }); // Nicer date format
+        if (bookingSummaryDateEl) bookingSummaryDateEl.textContent = new Date(selectedDate + 'T00:00:00').toLocaleDateString([], { year: 'numeric', month: 'long', day: 'numeric' });
         if (bookingSummaryTimeEl) bookingSummaryTimeEl.textContent = new Date(selectedTimeSlot.startDateTime).toLocaleTimeString([], { hour: 'numeric', minute: 'numeric', hour12: true });
         navigateToStep(bookingFormContainerStep);
     }
@@ -218,6 +215,25 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!confirmButton) return; 
             confirmButton.disabled = true;
             confirmButton.textContent = 'Booking...';
+
+            // DEBUG LOGS (can be removed in final production)
+            // console.log("DEBUG: Attempting to submit booking.");
+            // console.log("DEBUG: selectedService object:", JSON.parse(JSON.stringify(selectedService)));
+            // console.log("DEBUG: selectedTimeSlot object:", JSON.parse(JSON.stringify(selectedTimeSlot)));
+            
+            if (!selectedService || !selectedService.id) {
+                showError("Booking failed: Service ID is missing. Please re-select a service.");
+                confirmButton.disabled = false;
+                confirmButton.textContent = ' mowing.day Confirm Booking'; // Ensure text is reset
+                return;
+            }
+            if (!selectedTimeSlot || !selectedTimeSlot.startDateTime || !selectedTimeSlot.endDateTime || !selectedTimeSlot.staffMemberId) {
+                showError("Booking failed: Time slot details (start, end, or staff) are missing. Please re-select a time slot.");
+                confirmButton.disabled = false;
+                confirmButton.textContent = ' mowing.day Confirm Booking'; // Ensure text is reset
+                return;
+            }
+
             try {
                 const bookingData = {
                     serviceId: selectedService.id,
@@ -228,18 +244,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     customerEmail: document.getElementById('customer-email').value,
                     customerPhone: document.getElementById('customer-phone').value || ""
                 };
+
+                // console.log("DEBUG: bookingData being sent to backend:", JSON.parse(JSON.stringify(bookingData)));
+
                 const response = await fetch(`${API_BASE_URL}/api/book`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(bookingData)
                 });
                 if (!response.ok) { 
-                    const errorData = await response.json().catch(() => ({ message: "Unknown error structure" })); 
+                    const errorData = await response.json().catch(() => ({ message: "Unknown error structure from server" })); 
                     throw new Error(errorData.message || `Server responded with ${response.status}`);
                 }
-                const result = await response.json(); // We don't need result.bookingDetails.id for the message anymore
+                const result = await response.json(); 
                 
-                // --- MODIFIED: Prepare data for and show custom modal ---
                 const serviceNameForModal = selectedService.displayName;
                 const bookedDateTimeForModal = new Date(selectedTimeSlot.startDateTime);
                 const bookedDateStringForModal = bookedDateTimeForModal.toLocaleDateString([], { year: 'numeric', month: 'long', day: 'numeric' });
